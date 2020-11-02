@@ -256,3 +256,27 @@ impl Neuronic for Neuron {
             .push(Synapse::new(starting_weight, synaptic_type, input));
     }
 }
+
+/// A simple sensor that can be set
+/// and implements NeuronicInput
+pub struct NeuronicSensor {
+    measure: RefCell<f32>
+}
+
+impl NeuronicSensor {
+    pub fn new() -> NeuronicSensor {
+        NeuronicSensor {
+            measure: RefCell::new(0.0)
+        }
+    }
+
+    pub fn set_measure(&self, measure: f32) {
+        *self.measure.borrow_mut() = measure;
+    }
+}
+
+impl NeuronicInput for NeuronicSensor {
+    fn get_measure(&self, _cycle: ChargeCycle) -> f32 {
+        *self.measure.borrow()
+    }
+}
