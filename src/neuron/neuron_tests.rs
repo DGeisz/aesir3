@@ -229,7 +229,7 @@ fn test_run_static_cycle() {
 fn test_update_synapses() {
     let fire_threshold = 10.;
     let max_weight = 8.;
-    let learning_constant = 3.;
+    let learning_constant = 0.1;
 
     let neuron = Neuron::new(
         fire_threshold,
@@ -373,5 +373,101 @@ fn test_update_synapses() {
 
 #[test]
 fn test_multiple_neurons() {
+    let fire_threshold = 10.;
+    let max_weight = 8.;
+    let learning_constant = 3.;
 
+    let n1 = Rc::new(Neuron::new(
+        fire_threshold,
+        max_weight,
+        learning_constant
+    ));
+
+    let n2 = Rc::new(Neuron::new(
+        fire_threshold,
+        max_weight,
+        learning_constant
+    ));
+
+    // Here "s" stands for sensor
+    let s1 = Rc::new(NeuronicSensor::new());
+    let s2 = Rc::new(NeuronicSensor::new());
+    let s3 = Rc::new(NeuronicSensor::new());
+    let s4 = Rc::new(NeuronicSensor::new());
+
+    let s1_type = SynapticType::Excitatory;
+    let s2_type = SynapticType::Excitatory;
+    let s3_type = SynapticType::Excitatory;
+    let s4_type = SynapticType::Inhibitory;
+
+    let n1_s1_weight = 6.;
+    let n1_s2_weight = 7.;
+    let n1_s3_weight = 4.;
+    let n1_s4_weight = 8.;
+    n1.create_synapse(n1_s1_weight, s1_type, Rc::clone(&s1) as Rc<dyn NeuronicInput>);
+    n1.create_synapse(n1_s2_weight, s2_type, Rc::clone(&s2) as Rc<dyn NeuronicInput>);
+    n1.create_synapse(n1_s3_weight, s3_type, Rc::clone(&s3) as Rc<dyn NeuronicInput>);
+    n1.create_synapse(n1_s4_weight, s4_type, Rc::clone(&s4) as Rc<dyn NeuronicInput>);
+
+    let n2_s1_weight = 2.;
+    let n2_s2_weight = 4.;
+    let n2_s3_weight = 8.;
+    let n2_s4_weight = 8.;
+    n2.create_synapse(n2_s1_weight, s1_type, Rc::clone(&s1) as Rc<dyn NeuronicInput>);
+    n2.create_synapse(n2_s2_weight, s2_type, Rc::clone(&s2) as Rc<dyn NeuronicInput>);
+    n2.create_synapse(n2_s3_weight, s3_type, Rc::clone(&s3) as Rc<dyn NeuronicInput>);
+    n2.create_synapse(n2_s4_weight, s4_type, Rc::clone(&s4) as Rc<dyn NeuronicInput>);
+
+    let n3 = Neuron::new(fire_threshold, max_weight, learning_constant);
+
+    let n3_n1_weight = 8.;
+    let n3_n2_weight = 8.;
+    n3.create_synapse(n3_n1_weight, SynapticType::Excitatory, Rc::clone(&n1) as Rc<dyn NeuronicInput>);
+    n3.create_synapse(n3_n2_weight, SynapticType::Excitatory, Rc::clone(&n2) as Rc<dyn NeuronicInput>);
+
+    let s1_measure = 0.9;
+    let s2_measure = 0.8;
+    let s3_measure = 0.7;
+    let s4_measure = 0.2;
+    s1.set_measure(s1_measure);
+    s2.set_measure(s2_measure);
+    s3.set_measure(s3_measure);
+    s4.set_measure(s4_measure);
+
+    let cycle = ChargeCycle::Even;
+    n1.run_static_cycle(cycle);
+    n2.run_static_cycle(cycle);
+    n3.run_static_cycle(cycle);
+
+    cmp_f32(n1.get_measure(cycle), s2_measure);
+    cmp_f32(n1.get_measure(cycle.prev_cycle()), 0.0);
+    cmp_f32(n2.get_measure(cycle), s3_measure);
+    cmp_f32(n2.get_measure(cycle.prev_cycle()), 0.0);
+    cmp_f32(n3.get_measure(cycle), 0.0);
+    cmp_f32(n3.get_measure(cycle.prev_cycle()), 0.0);
+
+    let n1_last_fired = s2_measure;
+    let n2_last_fired = s3_measure;
+
+    let s1_measure = 0.6;
+    let s2_measure = 0.8;
+    let s3_measure = 0.7;
+    let s4_measure = 0.9;
+    s1.set_measure(s1_measure);
+    s2.set_measure(s2_measure);
+    s3.set_measure(s3_measure);
+    s4.set_measure(s4_measure);
+
+    let cycle = cycle.next_cycle();
+    n1.run_cycle(cycle);
+    n2.run_cycle(cycle);
+    n3.run_cycle(cycle);
+
+    cmp_f32(n1.get_measure(cycle), 0.0);
+    cmp_f32(n1.get_measure(cycle.prev_cycle()), n1_last_fired);
+    cmp_f32(n2.get_measure(cycle), 0.0);
+    cmp_f32(n2.get_measure(cycle.prev_cycle()),n2_last_fired);
+    cmp_f32(n3.get_measure(cycle), n2_last_fired);
+    cmp_f32(n3.get_measure(cycle.prev_cycle()), 0.0);
 }
+

@@ -14,6 +14,12 @@ pub enum ChargeCycle {
 }
 
 impl ChargeCycle {
+    // Note that prev_cycle and next_cycle
+    // do the exact same thing
+    pub fn next_cycle(&self) -> ChargeCycle {
+        self.prev_cycle()
+    }
+
     pub fn prev_cycle(&self) -> ChargeCycle {
         match self {
             ChargeCycle::Even => ChargeCycle::Odd,
@@ -238,6 +244,12 @@ impl Neuronic for Neuron {
                 synapse.weight += self.learning_constant
                     * (self.max_synapse_weight - synapse.weight)
                     * ((2.0 * fired_measure) - synapse_measure);
+            }
+
+            if synapse.weight > self.max_synapse_weight {
+                synapse.weight = self.max_synapse_weight - 0.1; // Just under max weight so that it still updates
+            } else if synapse.weight < 0.0 {
+                synapse.weight = 0.0;
             }
         }
     }
