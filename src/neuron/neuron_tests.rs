@@ -471,3 +471,147 @@ fn test_multiple_neurons() {
     cmp_f32(n3.get_measure(cycle.prev_cycle()), 0.0);
 }
 
+#[test]
+fn test_clear() {
+    let fire_threshold = 10.;
+    let max_weight = 8.;
+    let learning_constant = 3.;
+
+    let neuron = Neuron::new(
+        fire_threshold,
+        max_weight,
+        learning_constant
+    );
+
+    cmp_f32(neuron.get_measure(ChargeCycle::Even), 0.0);
+    cmp_f32(neuron.get_measure(ChargeCycle::Odd), 0.0);
+
+    // Here "s" stands for sensor
+    let s1 = Rc::new(NeuronicSensor::new());
+    let s2 = Rc::new(NeuronicSensor::new());
+    let s3 = Rc::new(NeuronicSensor::new());
+    let s4 = Rc::new(NeuronicSensor::new());
+
+    let s1_weight = 6.;
+    let s1_type = SynapticType::Excitatory;
+    neuron.create_synapse(
+        s1_weight,
+        s1_type,
+        Rc::clone(&s1) as Rc<dyn NeuronicInput>
+    );
+
+    let s2_weight = 7.5;
+    let s2_type = SynapticType::Excitatory;
+    neuron.create_synapse(
+        s2_weight,
+        s2_type,
+        Rc::clone(&s2) as Rc<dyn NeuronicInput>
+    );
+
+    let s3_weight = 3.;
+    let s3_type = SynapticType::Inhibitory;
+    neuron.create_synapse(
+        s3_weight,
+        s3_type,
+        Rc::clone(&s3) as Rc<dyn NeuronicInput>
+    );
+
+    let s4_weight = 7.;
+    let s4_type = SynapticType::Inhibitory;
+    neuron.create_synapse(
+        s4_weight,
+        s4_type,
+        Rc::clone(&s4) as Rc<dyn NeuronicInput>
+    );
+
+    // Test basic firing
+    let s1_measure = 0.9;
+    let s2_measure = 0.8;
+    let s3_measure = 0.3;
+    let s4_measure = 0.4;
+
+    s1.set_measure(s1_measure);
+    s2.set_measure(s2_measure);
+    s3.set_measure(s3_measure);
+    s4.set_measure(s4_measure);
+
+    neuron.run_static_cycle(ChargeCycle::Even);
+    neuron.clear();
+
+    cmp_f32(neuron.get_measure(ChargeCycle::Even), 0.0);
+    cmp_f32(neuron.get_measure(ChargeCycle::Odd), 0.0);
+
+
+    // Test firing with inhibition on top that can be overcome
+
+    let s1_measure = 0.8;
+    let s2_measure = 0.7;
+    let s3_measure = 0.9;
+    let s4_measure = 0.4;
+
+    s1.set_measure(s1_measure);
+    s2.set_measure(s2_measure);
+    s3.set_measure(s3_measure);
+    s4.set_measure(s4_measure);
+
+    neuron.run_static_cycle(ChargeCycle::Odd);
+    neuron.clear();
+
+    cmp_f32(neuron.get_measure(ChargeCycle::Even), 0.0);
+    cmp_f32(neuron.get_measure(ChargeCycle::Odd), 0.0);
+
+    // Test firing with a lower order inhibition that can be overcome
+
+    let s1_measure = 0.7;
+    let s2_measure = 0.9;
+    let s3_measure = 0.8;
+    let s4_measure = 0.4;
+
+    s1.set_measure(s1_measure);
+    s2.set_measure(s2_measure);
+    s3.set_measure(s3_measure);
+    s4.set_measure(s4_measure);
+
+    neuron.run_static_cycle(ChargeCycle::Even);
+    neuron.clear();
+
+    cmp_f32(neuron.get_measure(ChargeCycle::Even), 0.0);
+    cmp_f32(neuron.get_measure(ChargeCycle::Odd), 0.0);
+
+    // Test firing with inhibition on top that can't be overcome
+
+    let s1_measure = 0.7;
+    let s2_measure = 0.9;
+    let s3_measure = 0.4;
+    let s4_measure = 0.95;
+
+    s1.set_measure(s1_measure);
+    s2.set_measure(s2_measure);
+    s3.set_measure(s3_measure);
+    s4.set_measure(s4_measure);
+
+    neuron.run_static_cycle(ChargeCycle::Odd);
+    neuron.clear();
+
+    cmp_f32(neuron.get_measure(ChargeCycle::Even), 0.0);
+    cmp_f32(neuron.get_measure(ChargeCycle::Odd), 0.0);
+
+
+    // Test firing with a lower inhibition that can't be overcome
+    let s1_measure = 0.7;
+    let s2_measure = 0.9;
+    let s3_measure = 0.4;
+    let s4_measure = 0.8;
+
+    s1.set_measure(s1_measure);
+    s2.set_measure(s2_measure);
+    s3.set_measure(s3_measure);
+    s4.set_measure(s4_measure);
+
+    neuron.run_static_cycle(ChargeCycle::Even);
+    neuron.clear();
+
+    cmp_f32(neuron.get_measure(ChargeCycle::Even), 0.0);
+    cmp_f32(neuron.get_measure(ChargeCycle::Odd), 0.0);
+}
+

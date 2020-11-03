@@ -31,13 +31,15 @@ impl ChargeCycle {
 /// All neurons implement this trait
 pub trait Neuronic {
     /// Cycle where learning occurs, i.e. synaptic-weight updates
-    fn run_cycle(&self, cycle: ChargeCycle) {
-        self.run_static_cycle(cycle);
+    fn run_cycle(&self, cycle: ChargeCycle) -> f32 {
+        let measure = self.run_static_cycle(cycle);
         self.update_synapses(cycle);
+
+        measure
     }
 
     /// Cycle where learning does not occur, and simply processes IO
-    fn run_static_cycle(&self, cycle: ChargeCycle);
+    fn run_static_cycle(&self, cycle: ChargeCycle) -> f32;
 
     /// Update synapses based on current measure
     fn update_synapses(&self, cycle: ChargeCycle);
@@ -198,7 +200,7 @@ impl NeuronicInput for Neuron {
 }
 
 impl Neuronic for Neuron {
-    fn run_static_cycle(&self, cycle: ChargeCycle) {
+    fn run_static_cycle(&self, cycle: ChargeCycle) -> f32 {
         let mut synapses = self.synapses.borrow_mut();
         let mut internal_measure = self.internal_measure.borrow_mut();
 
@@ -213,19 +215,23 @@ impl Neuronic for Neuron {
         // aggregate weight surpasses the fire_threshold
         let mut total_weight = 0.0;
 
+        let final_measure;
         loop {
             if let Some(impulse) = impulse_heap.pop() {
                 total_weight += impulse.weight;
 
                 if total_weight >= self.fire_threshold {
-                    internal_measure.set_measure(cycle, impulse.measure);
+                    final_measure = impulse.measure;
+                    internal_measure.set_measure(cycle, final_measure);
                     break;
                 }
             } else {
-                internal_measure.set_measure(cycle, 0.0);
+                final_measure = 0.0;
+                internal_measure.set_measure(cycle, final_measure);
                 break;
             }
         }
+        final_measure
     }
 
     /// This is about the most basic update mechanism possible.
