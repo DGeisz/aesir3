@@ -96,6 +96,7 @@ impl Ord for Impulse {
 }
 
 /// Basic synapse type and synpase
+#[derive(Clone, Copy)]
 pub enum SynapticType {
     Excitatory,
     Inhibitory,
