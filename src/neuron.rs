@@ -279,17 +279,24 @@ impl Neuronic for Neuron {
 /// A simple sensor that can be set
 /// and implements NeuronicInput
 pub struct NeuronicSensor {
-    measure: RefCell<f32>
+    measure: RefCell<f32>,
 }
 
 impl NeuronicSensor {
     pub fn new() -> NeuronicSensor {
         NeuronicSensor {
-            measure: RefCell::new(0.0)
+            measure: RefCell::new(0.0),
         }
     }
 
     pub fn set_measure(&self, measure: f32) {
+        // Make sure measure is only between 0 and 1
+        if measure > 1. || measure < 0. {
+            panic!(
+                "Measure {} out of bounds!  Measure must be between 0.0 and 1.0",
+                measure
+            );
+        }
         *self.measure.borrow_mut() = measure;
     }
 }
