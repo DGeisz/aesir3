@@ -191,6 +191,10 @@ impl Neuron {
             internal_measure: RefCell::new(InternalMeasure::new()),
         }
     }
+
+    pub fn get_synapse_count(&self) -> usize {
+        self.synapses.borrow().len()
+    }
 }
 
 impl NeuronicInput for Neuron {
