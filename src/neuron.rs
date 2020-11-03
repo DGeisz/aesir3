@@ -280,3 +280,6 @@ impl NeuronicInput for NeuronicSensor {
         *self.measure.borrow()
     }
 }
+
+#[cfg(test)]
+mod neuron_tests;
