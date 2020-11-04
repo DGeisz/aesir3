@@ -253,7 +253,8 @@ impl Neuronic for Neuron {
             } else {
                 synapse.weight += self.learning_constant
                     * (self.max_synapse_weight - synapse.weight)
-                    * ((2.0 * fired_measure) - synapse_measure);
+                    * (fired_measure - synapse_measure);
+                // * ((2.0 * fired_measure) - synapse_measure);
             }
 
             if synapse.weight > self.max_synapse_weight {
